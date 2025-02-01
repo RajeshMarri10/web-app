@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: web-app
+  namespace: argocd
+  annotations:
+    # Argo CD Image Updater annotations
+    argocd-image-updater.argoproj.io/image-list: web-app=mrajeshm7/web-app
+    argocd-image-updater.argoproj.io/web-app.update-strategy: latest
+    argocd-image-updater.argoproj.io/web-app.allow-tags: regexp:^0.*
+    # Specify the pull secret for the Docker registry
+    argocd-image-updater.argoproj.io/web-app.pull-secret: pullsecret:argocd/my-docker-secret
+    # Write-back configuration
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/web-app.write-back-target: values.yaml
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RajeshMarri10/web-app.git
+    targetRevision: HEAD
+    path: .
+    helm:
+      # Specify the Helm values for the image
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: web-app-namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+# kubectl create secret docker-registry my-docker-secret \
+#   --docker-server=https://index.docker.io/v1/ \
+#   --docker-username=mrajeshm7 \
+#   --docker-password=Rajesh@18599 \
+#   --docker-email=marrirajesh2000@gmail.com \
+#   --namespace=argocd
